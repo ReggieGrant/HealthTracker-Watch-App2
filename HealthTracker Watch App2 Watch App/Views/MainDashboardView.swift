@@ -8,118 +8,100 @@
 import SwiftUI
 
 struct MainDashboardView: View {
-    @ObservedObject var viewModel: HealthViewModel
+    @ObservedObject var healthViewModel: HealthViewModel
+    
+    let ringSize = 60.0
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                // MARK: - Header
                 Text("Today")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.gray)
                 
-                HStack(spacing: 20) {
-                    VStack(spacing: 6) {
+                // MARK: - Progress Rings Row
+                HStack(spacing: 16) {
+                    VStack (spacing: 6) {
                         ProgressRingView(
-                            color: .cyan,
-                            progress: viewModel.waterProgress,
-                            icon: "drop.fill",
-                            size: 55
+                            color: EntryType.calories.color,
+                            progress: healthViewModel.caloriesProgress,
+                            icon: EntryType.calories.icon,
+                            size: ringSize
                         )
-                        Text("\(Int(viewModel.todaysWater))")
-                            .font(
-                                .system(
-                                    size: 16,
-                                    weight: .bold,
-                                    design: .rounded
-                                )
-                            )
-                            .foregroundColor(.cyan)
-                        Text("\(Int(viewModel.goals.dailyWaterGoal)) ml")
-                            .font(.system(size: 9))
+                        
+                        Text("\(Int(healthViewModel.todaysCalories))")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(EntryType.calories.color)
+                        
+                        Text("/ \(Int(healthViewModel.goals.dailyCaloriesGoal))")
+                            .font(.system(size: 9, design: .rounded))
                             .foregroundColor(.gray)
                     }
-
-                    VStack(spacing: 6) {
+                    
+                    VStack (spacing: 6) {
                         ProgressRingView(
-                            color: .orange,
-                            progress: viewModel.caloriesProgress,
-                            icon: "flame.fill",
-                            size: 55
+                            color: EntryType.water.color,
+                            progress: healthViewModel.waterProgress,
+                            icon: EntryType.water.icon,
+                            size: ringSize
                         )
-                        Text("\(Int(viewModel.todaysCalories))")
-                            .font(
-                                .system(
-                                    size: 16,
-                                    weight: .bold,
-                                    design: .rounded
-                                )
-                            )
-                            .foregroundColor(.orange)
-                        Text("\(Int(viewModel.goals.dailyCaloriesGoal)) Kcal")
-                            .font(.system(size: 9))
+                        
+                        Text("\(Int(healthViewModel.todaysWater))")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(EntryType.water.color)
+                        
+                        Text("/ \(Int(healthViewModel.goals.dailyWaterGoal))")
+                            .font(.system(size: 9, design: .rounded))
                             .foregroundColor(.gray)
                     }
                 }
-            }
-            
-            // Add Entries button Set
-            HStack(spacing: 4) {
-                NavigationLink(destination: AddEntryView(viewModel: viewModel, entryType: .water)) {
-                    VStack(spacing: 4) {
-                        Image(systemName: EntryType.water.icon)
-                            .font(.system(size: 16, weight: .bold))
-                        Text(EntryType.water.displayType)
-                            .font(.system(size: 10))
+                
+                HStack(spacing: 12) {
+                    NavigationLink(destination: AddEntryView(healthViewModel: healthViewModel, entryType: .calories)) {
+                        QuickAddButton(
+                            icon: EntryType.calories.icon,
+                            label: "Calories",
+                            color: EntryType.calories.color
+                        )
                     }
-                    .foregroundColor(EntryType.water.color)
-                    .frame(width: 70, height: 50)
-                    .background(EntryType.water.color.opacity(0.2))
-                    .cornerRadius(12)
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    NavigationLink(destination: AddEntryView(healthViewModel: healthViewModel, entryType: .water)) {
+                        QuickAddButton(
+                            icon: EntryType.water.icon,
+                            label: "Water",
+                            color: EntryType.water.color
+                        )
+                    }
                 }
                 .buttonStyle(PlainButtonStyle())
-
-                NavigationLink(destination: AddEntryView(viewModel: viewModel, entryType: .calories)) {
-                    VStack(spacing: 4) {
-                        Image(systemName: EntryType.calories.icon)
-                            .font(.system(size: 16, weight: .bold))
-                        Text(EntryType.calories.displayType)
-                            .font(.system(size: 10))
+                
+                
+                NavigationLink(destination: GoalsSettingsView(viewModel: healthViewModel)) {
+                    HStack {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 12))
+                        Text("Goals")
+                            .font(.system(size: 12))
                     }
-                    .foregroundColor(EntryType.calories.color)
-                    .frame(width: 70, height: 50)
-                    .background(EntryType.calories.color.opacity(0.2))
-                    .cornerRadius(12)
+                    .foregroundColor(.gray)
                 }
                 .buttonStyle(PlainButtonStyle())
+                .padding(.top, 4)
             }
-            
-            // Gear Buttton To Configure The Goals
-            NavigationLink(destination: GoalSettingsView(viewModel: viewModel)) {
-                HStack {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 12))
-                    Text("Goals")
-                        .font(.system(size: 12))
-                }
-                .foregroundColor(.gray)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.top, 4)
-            
-            
-            // Nagivation To Heart Rate View
-            NavigationLink(destination: HeartRateView(viewModel: viewModel)) {
-                HStack {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 12))
-                    Text("Heart Rate")
-                        .font(.system(size: 12))
-                }
-                .foregroundColor(.red.opacity(0.3))
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.top, 4)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.vertical, 8)
+        .overlay {
+            if healthViewModel.showQuoteOverlay {
+                QuoteOverlayView(
+                    quote: healthViewModel.currentQuote,
+                    isLoading: healthViewModel.isLoadingQuote,
+                    onDismiss: {
+                        healthViewModel.showQuoteOverlay = false
+                    }
+                )
+            }
+        }
     }
 }

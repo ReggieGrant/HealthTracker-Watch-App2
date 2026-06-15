@@ -12,9 +12,9 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            MainDashboardView(viewModel: viewModel)
+            MainDashboardView(healthViewModel: viewModel)
         }.onAppear {
-            viewModel.refreshTodaysData()
+            viewModel.refreshDailyTotals()
         }
     }
 }

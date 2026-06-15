@@ -5,116 +5,115 @@
 //  Created by Reginald Grant on 6/7/26.
 //
 
-import SwiftUI
+import Foundation
 import Combine
 import WatchKit
 
-@MainActor
 class HealthViewModel: ObservableObject {
-    
-    @Published var goals: UserGoals
-    @Published var todaysCalories: Double = 0
+
+    // MARK: - Published Variables
     @Published var todaysWater: Double = 0
-    
-    @Published var currentHeartRate: Double = 0
-    @Published var isHealthKitAvailable: Bool = true
+    @Published var todaysCalories: Double = 0
+
+    @Published var goals: UserGoals
+
+    @Published var currentQuote: MotivationalQuote?
+    @Published var isLoadingQuote: Bool = false
+    @Published var showQuoteOverlay: Bool = false
+
+    @Published var latestHeartRate: HeartRateSample?
     @Published var heartRateErrors: String?
-    
-    private let healthKit = HealthKitManager.shared
-    
-    
-    // MARK: - Computed Properties
-    var caloriesProgress: Double {
-        min(todaysCalories / goals.dailyCaloriesGoal, 1.0)
-    }
-    
-    var waterProgress: Double {
-        min(todaysWater / goals.dailyWaterGoal, 1.0)
-    }
-    
-    var caloriesGoalMet: Bool {
-        todaysCalories >= goals.dailyCaloriesGoal
-    }
-    
-    var waterGoalMet: Bool {
-        todaysWater >= goals.dailyWaterGoal
-    }
-    
-    var formattedHeartRate: String {
-        "\(Int(currentHeartRate)) BPM"
-    }
-    
-    // MARK: - Initialization
+    @Published var isHealthKitAvailable: Bool = false
+
+    // MARK: - Services/Managers
+    private let storageManager = StorageManager.shared
+    private let motivationalQuoteService = MotivationalQuoteService.shared
+    private let healthKitManager = HealthKitManager.shared
+
+
     init() {
-        self.goals = StorageManager.shared.loadGoals()
-        refreshTodaysData()
+        self.goals = storageManager.loadCurrentGoals()
+        refreshDailyTotals()
+        isHealthKitAvailable = healthKitManager.isHealthDataAvailable
+    }
+
+    // MARK: - Computed Properties
+    var formattedHeartRate: String {
+        guard let bpm = latestHeartRate?.bpm else { return "--" }
+        return "\(Int(bpm)) BPM"
+    }
+
+    var caloriesProgress: Double {
+        guard goals.dailyCaloriesGoal > 0 else { return 0 }
+        return min(todaysCalories / goals.dailyCaloriesGoal, 1.0)
+    }
+
+    var waterProgress: Double {
+        guard goals.dailyWaterGoal > 0 else { return 0 }
+        return min(todaysWater / goals.dailyWaterGoal, 1.0)
+    }
+
+    // MARK: - HealthKit
+    func requestHealthKitAuthorization() async {
+        do {
+            try await healthKitManager.requestAuthorization()
+            await MainActor.run {
+                self.isHealthKitAvailable = self.healthKitManager.isHealthDataAvailable
+                self.heartRateErrors = nil
+            }
+        } catch {
+            await MainActor.run {
+                self.heartRateErrors = error.localizedDescription
+            }
+        }
     }
     
-    // MARK: - Public Methods
+    // MARK: - Methods Goals
+    func updateGoals(calories: Double, water: Double) {
+        goals = UserGoals(
+            dailyCaloriesGoal: calories, dailyWaterGoal: water
+        )
+        storageManager.saveNewGoals(goals)
+        WKInterfaceDevice.current().play(.success)
+    }
     
-    func refreshTodaysData() {
-        self.todaysCalories = StorageManager.shared.getTodaysTotal(for: .calories)
-        self.todaysWater = StorageManager.shared.getTodaysTotal(for: .water)
+    // MARK: - Methods Diary Entries
+    func refreshDailyTotals() {
+        todaysCalories = storageManager.getTodayTotal(for: .calories)
+        todaysWater = storageManager.getTodayTotal(for: .water)
     }
     
     func addCalories(_ amount: Double) {
-        let caloriesEntry = DiaryEntry(
+        let entry = DiaryEntry(
             type: .calories,
             value: amount
         )
+        storageManager.addEntry(entry)
         
-        StorageManager.shared.addEntry(caloriesEntry)
-        
-        todaysCalories += amount
-        
-        WKInterfaceDevice.current().play(.directionUp)
+        fetchQuoteAfterEntry()
     }
     
     func addWater(_ amount: Double) {
-        let waterEntry = DiaryEntry(
+        let entry = DiaryEntry(
             type: .water,
             value: amount
         )
-
-        StorageManager.shared.addEntry(waterEntry)
-
-        todaysWater += amount
-
-        WKInterfaceDevice.current().play(.notification)
-    }
-
-    func playClickHaptic() {
-        WKInterfaceDevice.current().play(.click)
-    }
-    
-    func requestHealthKitAuthorization() async {
-        guard isHealthKitAvailable else {
-            heartRateErrors = "Heart Rate is not available"
-            return
-        }
+        storageManager.addEntry(entry)
         
-        do {
-            try await healthKit.requestAuthorization()
-            isHealthKitAvailable = true
-            WKInterfaceDevice.current().play(.success)
-        } catch {
-            heartRateErrors = "Authorization Failed"
-            isHealthKitAvailable = false
-        }
+        fetchQuoteAfterEntry()
     }
-    
-    func startHeartRateMonitoring() async {
-        guard isHealthKitAvailable else {
-            heartRateErrors = "Heart Rate is not available"
-            return
-        }
+
+    // MARK: - Methods Motivational Quotes
+    func fetchQuoteAfterEntry() {
+        isLoadingQuote = true
+        showQuoteOverlay = true
         
-        do {
-            if let sample = try await healthKit.fetchLatestHeartRateMeasure() {
-                currentHeartRate = sample.bpm
-            }
-        } catch {
-            heartRateErrors = "Failed to fetch latest heart rate"
+        Task {
+            currentQuote = await motivationalQuoteService.fetchQuote()
+            isLoadingQuote = false
+            
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            showQuoteOverlay = false
         }
     }
 }

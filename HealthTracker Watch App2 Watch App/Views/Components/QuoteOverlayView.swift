@@ -1,5 +1,5 @@
 //
-//  QuoteOverlay.swift
+//  QuoteOverlayView.swift
 //  HealthTracker Watch App2
 //
 //  Created by Reginald Grant on 6/8/26.
@@ -8,21 +8,46 @@
 import SwiftUI
 
 struct QuoteOverlayView: View {
-    let quote: MotivationalQuote
+    let quote: MotivationalQuote?
     let isLoading: Bool
-    let onDismiss: (() -> Void)
+    let onDismiss: () -> Void
     
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.7)
+            // Semi-transparent background
+            Color.black.opacity(0.9)
                 .ignoresSafeArea()
             
             VStack(spacing: 12) {
                 if isLoading {
                     ProgressView()
+                        .tint(.white)
+                } else if let quote = quote {
+                    Image(systemName: "quote.opening")
+                        .font(.title3)
+                        .foregroundColor(.yellow)
+                    
+                    Text(quote.quote)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(4)
+                    
+                    Text("-- \(quote.author)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.gray)
                 }
+                
+                Text("Tap To Dismiss")
+                    .font(.system(size: 9))
+                    .foregroundColor(.gray.opacity(0.7))
+                    .padding(.top, 8)
             }
+            .padding(.horizontal, 12)
+        }
+        .onTapGesture {
+            onDismiss()
         }
     }
 }

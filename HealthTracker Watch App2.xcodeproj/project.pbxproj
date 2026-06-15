@@ -312,11 +312,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "HealthTracker Watch App2 Watch App/HealthTracker Watch App2 Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R7C5UJ7L7X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "HealthTracker Watch App2";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app reads your step count to track your daily activity progress";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This is an app for learning purposes";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKWatchOnly = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -344,11 +348,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "HealthTracker Watch App2 Watch App/HealthTracker Watch App2 Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R7C5UJ7L7X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "HealthTracker Watch App2";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app reads your step count to track your daily activity progress";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This is an app for learning purposes";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKWatchOnly = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -377,6 +385,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R7C5UJ7L7X;
 				INFOPLIST_KEY_CFBundleDisplayName = "HealthTracker Watch App2";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.BurgerShack.HealthTracker-Watch-App2";
@@ -393,6 +402,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R7C5UJ7L7X;
 				INFOPLIST_KEY_CFBundleDisplayName = "HealthTracker Watch App2";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.example.BurgerShack.HealthTracker-Watch-App2";

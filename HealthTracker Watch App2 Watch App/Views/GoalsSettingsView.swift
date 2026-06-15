@@ -7,138 +7,139 @@
 
 import SwiftUI
 
-struct GoalSettingsView: View {
+/// View for setting daily goals
+/// Design Principle: Simple configuration with sensible defaults
+struct GoalsSettingsView: View {
     
+    // MARK: - Properties
     @ObservedObject var viewModel: HealthViewModel
     @Environment(\.dismiss) private var dismiss
     
     @State private var caloriesGoal: Double
     @State private var waterGoal: Double
     
-    private let pressets: [Double] = [1500, 2000, 2500, 3000]
+    // MARK: - Preset Options
+    /// Design Principle: Quick selection reduces effort
+    private let caloriesPresets: [Double] = [1500, 2000, 2500, 3000]
+    private let waterPresets: [Double] = [1500, 2000, 2500, 3000]
     
+    // MARK: - Initialization
     init(viewModel: HealthViewModel) {
         self.viewModel = viewModel
-        _caloriesGoal = State(initialValue:  viewModel.goals.dailyCaloriesGoal)
+        _caloriesGoal = State(initialValue: viewModel.goals.dailyCaloriesGoal)
         _waterGoal = State(initialValue: viewModel.goals.dailyWaterGoal)
     }
     
+    // MARK: - Body
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                caloriesSection
-
+                // Calories Goal Section
+                VStack(spacing: 10) {
+                    HStack {
+                        Image(systemName: "flame.fill")
+                            .foregroundColor(.orange)
+                        Text("Calories Goal")
+                            .font(.system(size: 13, weight: .medium))
+                        Spacer()
+                    }
+                    
+                    Text("\(Int(caloriesGoal)) kcal")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.orange)
+                    
+                    // Preset buttons
+                    // Design Principle: One-tap selections
+                    HStack(spacing: 6) {
+                        ForEach(caloriesPresets, id: \.self) { preset in
+                            Button {
+                                caloriesGoal = preset
+                            } label: {
+                                Text("\(Int(preset/1000))k")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        caloriesGoal == preset
+                                            ? Color.orange
+                                            : Color.orange.opacity(0.2)
+                                    )
+                                    .foregroundColor(caloriesGoal == preset ? .black : .orange)
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+                
                 Divider()
                     .background(Color.gray.opacity(0.3))
-
-                waterSection
+                
+                // Water Goal Section
+                VStack(spacing: 10) {
+                    HStack {
+                        Image(systemName: "drop.fill")
+                            .foregroundColor(.cyan)
+                        Text("Water Goal")
+                            .font(.system(size: 13, weight: .medium))
+                        Spacer()
+                    }
+                    
+                    Text("\(Int(waterGoal)) ml")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.cyan)
+                    
+                    // Preset buttons
+                    HStack(spacing: 6) {
+                        ForEach(waterPresets, id: \.self) { preset in
+                            Button {
+                                
+                                waterGoal = preset
+                            } label: {
+                                Text("\(Int(preset/1000))L")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        waterGoal == preset
+                                            ? Color.cyan
+                                            : Color.cyan.opacity(0.2)
+                                    )
+                                    .foregroundColor(waterGoal == preset ? .black : .cyan)
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+                
+                // Save Button
+                Button {
+                    viewModel.updateGoals(calories: caloriesGoal, water: waterGoal)
+                    dismiss()
+                } label: {
+                    Text("Save Goals")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.green)
+                        .foregroundColor(.black)
+                        .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.top, 8)
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
         }
+        .navigationTitle("Goals")
+        .navigationBarTitleDisplayMode(.inline)
     }
+}
 
-    // MARK: - Calories Section
-    private var caloriesSection: some View {
-        VStack(spacing: 20) {
-            caloriesHeader
-            caloriesGoalText
-            caloriesPresetButtons
-        }
-    }
-
-    private var caloriesHeader: some View {
-        VStack {
-            Image(systemName: EntryType.calories.icon)
-                .foregroundColor(EntryType.calories.color)
-            Text("Calories Goal")
-                .font(.system(size: 13, weight: .medium))
-
-            Spacer()
-        }
-    }
-
-    private var caloriesGoalText: some View {
-        Text("\(Int(caloriesGoal)) Kcal")
-            .font(.system(size: 20, weight: .bold, design: .rounded))
-            .foregroundColor(.orange)
-    }
-
-    private var caloriesPresetButtons: some View {
-        HStack(spacing: 6) {
-            ForEach(pressets, id: \.self) { preset in
-                caloriesPresetButton(for: preset)
-            }
-        }
-    }
-
-    private func caloriesPresetButton(for preset: Double) -> some View {
-        let isSelected = caloriesGoal == preset
-        let backgroundColor = isSelected ? Color.orange : Color.orange.opacity(0.2)
-        let foregroundColor = isSelected ? Color.black : Color.orange
-
-        return Button {
-            caloriesGoal = preset
-        } label: {
-            Text("\(Int(preset/1000))K")
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(backgroundColor)
-                .foregroundColor(foregroundColor)
-                .cornerRadius(8)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-
-    // MARK: - Water Section
-    private var waterSection: some View {
-        VStack(spacing: 20) {
-            waterHeader
-            waterGoalText
-            waterPresetButtons
-        }
-    }
-
-    private var waterHeader: some View {
-        VStack {
-            Image(systemName: EntryType.water.icon)
-                .foregroundColor(EntryType.water.color)
-            Text("Water Goal")
-                .font(.system(size: 13, weight: .medium))
-
-            Spacer()
-        }
-    }
-
-    private var waterGoalText: some View {
-        Text("\(Int(waterGoal)) ml")
-            .font(.system(size: 20, weight: .bold, design: .rounded))
-            .foregroundColor(.cyan)
-    }
-
-    private var waterPresetButtons: some View {
-        HStack(spacing: 6) {
-            ForEach(pressets, id: \.self) { preset in
-                waterPresetButton(for: preset)
-            }
-        }
-    }
-
-    private func waterPresetButton(for preset: Double) -> some View {
-        let isSelected = waterGoal == preset
-        let backgroundColor = isSelected ? Color.cyan : Color.cyan.opacity(0.2)
-        let foregroundColor = isSelected ? Color.black : Color.cyan
-
-        return Button {
-            waterGoal = preset
-        } label: {
-            Text("\(Int(preset))ml")
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(backgroundColor)
-                .foregroundColor(foregroundColor)
-                .cornerRadius(8)
-        }
-        .buttonStyle(PlainButtonStyle())
+// MARK: - Preview
+#Preview {
+    NavigationStack {
+        GoalsSettingsView(viewModel: HealthViewModel())
     }
 }

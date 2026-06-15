@@ -5,68 +5,49 @@
 //  Created by Reginald Grant on 6/7/26.
 //
 
-import Foundation
 import Combine
+import Foundation
+import HealthKit
 
-// Singleton
+// Singleton Pattern
 class StorageManager {
-    
     static let shared = StorageManager()
     private init() {}
     
-    // MARK: - Keys
-    private enum Keys {
-        static let userGoals = "user_goals"
-        static let diaryEntries = "diary_entries" // water or calories entries
-    }
-    
-    // MARK: - Private Props
-    private let defaults = UserDefaults.standard // This is the storage that we are going to use to store our goals and entries
-    private let encoder = JSONEncoder()
+    private let storage = UserDefaults.standard
     private let decoder = JSONDecoder()
+    private let encoder = JSONEncoder()
     
-    // MARK: - Bussines Logic For User Goals
-    func saveGoals(_ goals: UserGoals) {
-        if let encoded = try? encoder.encode(goals) {
-            defaults.set(encoded, forKey: Keys.userGoals)
-        }
+    private enum Keys {
+        static let diaryEntries = "diary_entries"
+        static let userGoals = "user_goals"
     }
     
-    func loadGoals() -> UserGoals {
-        guard let data = defaults.data(forKey: Keys.userGoals), // JSON Encoded String
-              let goals = try? decoder.decode(UserGoals.self, from: data) else {
-            return UserGoals.defaultGoals
-        }
-        
-        return goals
-    }
-    
-    // entry is either a calories entry or water entry
+    // MARK: - Entries Business Logic
     func saveEntries(_ entries: [DiaryEntry]) {
+        // Try to encode and if things go south just return nil
         if let encoded = try? encoder.encode(entries) {
-            defaults.set(encoded, forKey: Keys.diaryEntries)
+            storage.set(encoded, forKey: Keys.diaryEntries)
         }
     }
     
     func loadEntries() -> [DiaryEntry] {
-        guard let data = defaults.data(forKey: Keys.diaryEntries),
-              let entries = try? decoder.decode([DiaryEntry].self, from: data) else {
-            return []
-        }
-        
-        return entries
+        guard let rawJsonData = storage.data(forKey: Keys.diaryEntries),
+              let diaryEntries = try? decoder.decode([DiaryEntry].self, from: rawJsonData) else {
+                  return []
+              }
+        return diaryEntries
     }
     
     func addEntry(_ entry: DiaryEntry) {
-        var entries = loadEntries() // 1. we get all entries from the storage
-        entries.append(entry) // 2. add the new entry to the group
-        saveEntries(entries) // 3. We reconciliate the storage with the new entry added
+        var allTimeEntries = loadEntries()
+        allTimeEntries.append(entry)
+        self.saveEntries(allTimeEntries)
     }
     
     func getTodaysEntries() -> [DiaryEntry] {
         let entries = loadEntries()
         let calendar = Calendar.current
-        // We want to filter entries for todays day (03/18T00:00:00 -> 03/18T23:59:59)
         let today = calendar.startOfDay(for: Date())
         
         return entries.filter { entry in
@@ -74,9 +55,25 @@ class StorageManager {
         }
     }
     
-    func getTodaysTotal(for type: EntryType) -> Double {
-        getTodaysEntries()
-            .filter { $0.type == type}
+    func getTodayTotal(for type: EntryType) -> Double {
+        self.getTodaysEntries()
+            .filter { $0.type == type }
             .reduce(0) { $0 + $1.value }
+    }
+    
+    
+    // MARK: - Settings Bussines Logic
+    func saveNewGoals(_ goals: UserGoals) {
+        if let encodedGoals = try? encoder.encode(goals) {
+            storage.set(encodedGoals, forKey: Keys.userGoals)
+        }
+    }
+    
+    func loadCurrentGoals() -> UserGoals {
+        guard let rawGoals = storage.data(forKey: Keys.userGoals),
+              let userGoals = try? decoder.decode(UserGoals.self, from: rawGoals) else {
+            return UserGoals.defaultGoals
+        }
+        return userGoals
     }
 }
