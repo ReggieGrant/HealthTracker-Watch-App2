@@ -50,7 +50,7 @@ struct HeartRateView: View {
             Text("Heart Rate")
                 .font(.headline)
             
-            Text("Alow Acces to Heart Rate")
+            Text("Allow Acces to Heart Rate")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
